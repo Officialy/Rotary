@@ -1,7 +1,7 @@
 package mods.officialy.rotary.common.init;
 
 import mods.officialy.rotary.Rotary;
-import mods.officialy.rotary.common.block.WorktableBlock;
+import mods.officialy.rotary.common.block.BlastFurnaceBlock;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
@@ -17,7 +17,7 @@ public class RotaryBlocks {
     public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, Rotary.MODID);
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, Rotary.MODID);
 
-    public static final RegistryObject<Block> WORKTABLE = register("worktable", () -> new WorktableBlock(BlockBehaviour.Properties.of(Material.STONE)));
+    public static final RegistryObject<Block> BLAST_FURNACE = register("blast_furnace", () -> new BlastFurnaceBlock(BlockBehaviour.Properties.of(Material.STONE)));
 
 
     public static <T extends Block> RegistryObject<T> register(String name, Supplier<T> block) {

@@ -4,7 +4,7 @@ import com.mojang.logging.LogUtils;
 import mods.officialy.rotary.common.init.RotaryBlockEntities;
 import mods.officialy.rotary.common.init.RotaryBlocks;
 import mods.officialy.rotary.common.init.RotaryMenus;
-import mods.officialy.rotary.common.item.RotaryItems;
+import mods.officialy.rotary.common.init.RotaryItems;
 import mods.officialy.rotary.common.init.RotaryRecipeTypes;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.CreativeModeTabEvent;

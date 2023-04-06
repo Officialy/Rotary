@@ -2,9 +2,6 @@ package mods.officialy.rotary.api.machine;
 
 public interface Machine {
 
-    // Method to tick the machine (e.g. to process input or output, or to produce power etc.)
-    void update();
-
     // Method to check if the machine is currently active (i.e. producing power)
     boolean isActive();
 

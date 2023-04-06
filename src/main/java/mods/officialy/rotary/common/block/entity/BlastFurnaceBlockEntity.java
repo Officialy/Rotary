@@ -1,10 +1,11 @@
 package mods.officialy.rotary.common.block.entity;
 
+import mods.officialy.rotary.Rotary;
 import mods.officialy.rotary.api.machine.Heatable;
 import mods.officialy.rotary.base.RotaryMachineBase;
-import mods.officialy.rotary.common.container.WorktableMenu;
+import mods.officialy.rotary.common.container.BlastFurnaceMenu;
 import mods.officialy.rotary.common.init.RotaryBlockEntities;
-import mods.officialy.rotary.common.recipe.WorktableRecipe;
+import mods.officialy.rotary.common.recipe.BlastFurnaceRecipe;
 import net.minecraft.client.renderer.texture.Tickable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -29,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-public class WorktableBlockEntity extends RotaryMachineBase implements MenuProvider, Tickable, Heatable {
+public class BlastFurnaceBlockEntity extends RotaryMachineBase implements MenuProvider, Tickable, Heatable {
 
     // The Inventory, 12 for crafting
     private final ItemStackHandler itemHandler = new ItemStackHandler(12) {
@@ -46,15 +47,17 @@ public class WorktableBlockEntity extends RotaryMachineBase implements MenuProvi
         }
     };
     private final LazyOptional<IItemHandler> lazyItemHandler = LazyOptional.of(() -> itemHandler);
+    private final LazyOptional<IItemHandler> lazyOutputInv = LazyOptional.of(() -> outputInv);
     protected final ContainerData data;
-    private int progress = 0;
+    public int progress = 0;
     private int maxProgress = 120; // Default is 6 seconds, multiplied by tier
     private float temperature = 20.0f;
     private static float minimumOperatingTemperature = 0f;
     private final float maximumTemperature = 2100.0f;
+    public boolean leaveLastItem = false;
 
-    public WorktableBlockEntity(BlockPos pos, BlockState state) {
-        super(RotaryBlockEntities.WORKTABLE.get(), pos, state);
+    public BlastFurnaceBlockEntity(BlockPos pos, BlockState state) {
+        super(RotaryBlockEntities.BLAST_FURNACE.get(), pos, state);
         this.data = new ContainerData() {
             @Override
             public int get(int index) {
@@ -85,22 +88,32 @@ public class WorktableBlockEntity extends RotaryMachineBase implements MenuProvi
         if (!level.isClientSide()) {
             if (hasRecipe(this) && temperature >= minimumOperatingTemperature) {
                 progress++;
+//                Rotary.LOGGER.info("Progress: " + progress);
                 Level level = getLevel();
                 SimpleContainer inventory = new SimpleContainer(itemHandler.getSlots());
                 for (int i = 0; i < itemHandler.getSlots(); i++) {
                     inventory.setItem(i, itemHandler.getStackInSlot(i));
                 }
 
-                Optional<WorktableRecipe> match = level.getRecipeManager().getRecipeFor(WorktableRecipe.Type.INSTANCE, inventory, level);
+                Optional<BlastFurnaceRecipe> match = level.getRecipeManager().getRecipeFor(BlastFurnaceRecipe.Type.INSTANCE, inventory, level);
 
                 if (match.isPresent()) {
-                    // Craft the recipe and output the result
                     ItemStack output = match.get().getResultItem(RegistryAccess.EMPTY).copy();
-                    itemHandler.extractItem(0, match.get().getIngredients().size(), false);
-                    for (int i = 1; i < 10; i++) {
-                        itemHandler.extractItem(i, 1, false);
+                    if (leaveLastItem) {
+                        // Craft the recipe and output the result
+                        itemHandler.extractItem(0, match.get().getIngredients().size(), false);
+                        for (int i = 1; i < 10; i++) {
+                            itemHandler.extractItem(i, 1, false);
+                        }
+                        outputInv.insertItem(1, output, false);
+                    }else {
+                        // Craft the recipe and output the result
+                        itemHandler.extractItem(0, match.get().getIngredients().size(), false);
+                        for (int i = 1; i < 10; i++) {
+                            itemHandler.extractItem(i, 1, false);
+                        }
+                        outputInv.insertItem(1, output, false);
                     }
-                    itemHandler.insertItem(9, output, false);
                 }
             } else {
                 progress = 0;
@@ -109,7 +122,7 @@ public class WorktableBlockEntity extends RotaryMachineBase implements MenuProvi
         }
     }
 
-    private static boolean hasRecipe(WorktableBlockEntity blockEntity) {
+    private static boolean hasRecipe(BlastFurnaceBlockEntity blockEntity) {
         Level level = blockEntity.getLevel();
         if (level == null) {
             return false;
@@ -120,10 +133,9 @@ public class WorktableBlockEntity extends RotaryMachineBase implements MenuProvi
             inventory.setItem(i, blockEntity.itemHandler.getStackInSlot(i));
         }
 
-        Optional<WorktableRecipe> recipe = level.getRecipeManager().getRecipeFor(WorktableRecipe.Type.INSTANCE, inventory, level);
-        if (recipe.isPresent()) {
-            minimumOperatingTemperature = recipe.get().getOperatingTemperature();
-        }
+        Optional<BlastFurnaceRecipe> recipe = level.getRecipeManager().getRecipeFor(BlastFurnaceRecipe.Type.INSTANCE, inventory, level);
+        recipe.ifPresent(blastFurnaceRecipe -> minimumOperatingTemperature = blastFurnaceRecipe.getOperatingTemperature());
+
         return recipe.isPresent() && canInsertAmountIntoOutputSlot(outputInventory) && canInsertItemIntoOutputSlot(outputInventory, recipe.get().getResultItem(RegistryAccess.EMPTY));
     }
 
@@ -142,6 +154,7 @@ public class WorktableBlockEntity extends RotaryMachineBase implements MenuProvi
         outputInv.deserializeNBT(tag.getCompound("outputInventory"));
         temperature = tag.getFloat("temperature");
         progress = tag.getInt("progress");
+        leaveLastItem = tag.getBoolean("leaveLastItem");
     }
 
     @Override
@@ -151,6 +164,7 @@ public class WorktableBlockEntity extends RotaryMachineBase implements MenuProvi
         tag.put("outputInventory", outputInv.serializeNBT());
         tag.putFloat("temperature", temperature);
         tag.putFloat("progress", progress);
+        tag.putBoolean("leaveLastItem", leaveLastItem);
     }
 
     @Override
@@ -176,7 +190,8 @@ public class WorktableBlockEntity extends RotaryMachineBase implements MenuProvi
     @Override
     public <T> LazyOptional<T> getCapability(Capability<T> cap, Direction side) {
         if (cap == ForgeCapabilities.ITEM_HANDLER) {
-            return lazyItemHandler.cast();
+
+            return side == Direction.DOWN ? this.lazyOutputInv.cast() : this.lazyItemHandler.cast();
         }
         return super.getCapability(cap, side);
     }
@@ -184,11 +199,11 @@ public class WorktableBlockEntity extends RotaryMachineBase implements MenuProvi
     @Nullable
     @Override
     public AbstractContainerMenu createMenu(int id, Inventory inv, Player player) {
-        return new WorktableMenu(id, inv, this, this.data);
+        return new BlastFurnaceMenu(id, inv, this, this.data);
     }
 
     @Override
     public Component getDisplayName() {
-        return Component.literal("Worktable");
+        return Component.literal("Blast Furnace");
     }
 }

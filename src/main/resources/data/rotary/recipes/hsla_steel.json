@@ -1,0 +1,24 @@
+{
+  "type": "rotary:blast_furnace",
+  "temperature": 0,
+  "timeMultiplier": 1,
+  "experience": 1.0,
+  "needsAdditives": false,
+  "ingredients": [
+    {
+      "item": "rotary:coal_coke"
+    }
+  ],
+  "key": {
+    "#": {
+      "tag": "minecraft:planks"
+    }
+  },
+  "pattern": [
+    "##",
+    "##"
+  ],
+  "output": {
+    "item": "rotary:hsla_steel"
+  }
+}
