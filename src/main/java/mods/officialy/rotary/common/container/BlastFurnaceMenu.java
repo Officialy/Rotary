@@ -41,13 +41,13 @@ public class BlastFurnaceMenu extends AbstractContainerMenu {
                     this.addSlot(new SlotItemHandler(handler, id++, 62 + j * 18, 17 + i * 18));  // Crafting grid
                 }
             }
-            this.addSlot(new SlotItemHandler(handler, id, 33, 17));  // Additive
+            this.addSlot(new SlotItemHandler(handler, id++, 33, 17));  // Additive
             this.addSlot(new SlotItemHandler(handler, id++, 33, 35));  // Additive
-            this.addSlot(new SlotItemHandler(handler, id, 33, 53));  // Additive
+            this.addSlot(new SlotItemHandler(handler, id++, 33, 53));  // Additive
         });
         this.blockEntity.getCapability(ForgeCapabilities.ITEM_HANDLER, Direction.DOWN).ifPresent(handler -> {
             int id = 0;
-            this.addSlot(new ResultSlotItemHandler(handler, id, 128, 17));  // Output
+            this.addSlot(new ResultSlotItemHandler(handler, id++, 128, 17));  // Output
             this.addSlot(new ResultSlotItemHandler(handler, id++, 128, 35));  // Output
             this.addSlot(new ResultSlotItemHandler(handler, id, 128, 53));  // Output
         });

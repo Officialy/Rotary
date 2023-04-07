@@ -4,14 +4,20 @@
   "timeMultiplier": 1,
   "experience": 1.0,
   "needsAdditives": false,
-  "ingredients": [
-    {
+  "additives": {
+    "1": {
+      "minecraft": "minecraft:sand"
+    },
+    "2": {
+      "item": "minecraft:gunpowder"
+    },
+    "3": {
       "item": "rotary:coal_coke"
     }
-  ],
+  },
   "key": {
     "#": {
-      "tag": "minecraft:planks"
+      "item": "minecraft:iron_ingot"
     }
   },
   "pattern": [
@@ -19,6 +25,6 @@
     "##"
   ],
   "output": {
-    "item": "rotary:hsla_steel"
+    "item": "rotary:hsla_steel_ingot"
   }
 }

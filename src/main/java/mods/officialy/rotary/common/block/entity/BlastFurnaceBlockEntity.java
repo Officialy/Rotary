@@ -32,7 +32,7 @@ import java.util.Optional;
 
 public class BlastFurnaceBlockEntity extends RotaryMachineBase implements MenuProvider, Tickable, Heatable {
 
-    // The Inventory, 12 for crafting
+    // The Inventory, first 3 for additives the other 9 for crafting
     private final ItemStackHandler itemHandler = new ItemStackHandler(12) {
         @Override
         protected void onContentsChanged(int slot) {
@@ -88,7 +88,7 @@ public class BlastFurnaceBlockEntity extends RotaryMachineBase implements MenuPr
         if (!level.isClientSide()) {
             if (hasRecipe(this) && temperature >= minimumOperatingTemperature) {
                 progress++;
-//                Rotary.LOGGER.info("Progress: " + progress);
+                Rotary.LOGGER.info("Progress: " + progress);
                 Level level = getLevel();
                 SimpleContainer inventory = new SimpleContainer(itemHandler.getSlots());
                 for (int i = 0; i < itemHandler.getSlots(); i++) {
@@ -98,6 +98,7 @@ public class BlastFurnaceBlockEntity extends RotaryMachineBase implements MenuPr
                 Optional<BlastFurnaceRecipe> match = level.getRecipeManager().getRecipeFor(BlastFurnaceRecipe.Type.INSTANCE, inventory, level);
 
                 if (match.isPresent()) {
+                    Rotary.LOGGER.info("match.isPresent()");
                     ItemStack output = match.get().getResultItem(RegistryAccess.EMPTY).copy();
                     if (leaveLastItem) {
                         // Craft the recipe and output the result
@@ -106,7 +107,7 @@ public class BlastFurnaceBlockEntity extends RotaryMachineBase implements MenuPr
                             itemHandler.extractItem(i, 1, false);
                         }
                         outputInv.insertItem(1, output, false);
-                    }else {
+                    } else {
                         // Craft the recipe and output the result
                         itemHandler.extractItem(0, match.get().getIngredients().size(), false);
                         for (int i = 1; i < 10; i++) {
@@ -135,7 +136,6 @@ public class BlastFurnaceBlockEntity extends RotaryMachineBase implements MenuPr
 
         Optional<BlastFurnaceRecipe> recipe = level.getRecipeManager().getRecipeFor(BlastFurnaceRecipe.Type.INSTANCE, inventory, level);
         recipe.ifPresent(blastFurnaceRecipe -> minimumOperatingTemperature = blastFurnaceRecipe.getOperatingTemperature());
-
         return recipe.isPresent() && canInsertAmountIntoOutputSlot(outputInventory) && canInsertItemIntoOutputSlot(outputInventory, recipe.get().getResultItem(RegistryAccess.EMPTY));
     }
 

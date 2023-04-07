@@ -1,6 +1,9 @@
 package mods.officialy.rotary.common.recipe;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import mods.officialy.rotary.Rotary;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.FriendlyByteBuf;
@@ -12,6 +15,7 @@ import net.minecraft.world.item.crafting.*;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Map;
 
 public class BlastFurnaceRecipe implements Recipe<SimpleContainer> {
@@ -122,27 +126,45 @@ public class BlastFurnaceRecipe implements Recipe<SimpleContainer> {
         @Override
         public BlastFurnaceRecipe fromJson(ResourceLocation id, JsonObject json) {
             Map<String, Ingredient> map = ShapedRecipe.keyFromJson(GsonHelper.getAsJsonObject(json, "key"));
-            String[] astring = ShapedRecipe.shrink(ShapedRecipe.patternFromJson(GsonHelper.getAsJsonArray(json, "pattern")));
-            int i = astring[0].length();
-            int j = astring.length;
-            NonNullList<Ingredient> nonnulllist = ShapedRecipe.dissolvePattern(astring, map, i, j);
-            ItemStack output = ShapedRecipe.itemStackFromJson(GsonHelper.getAsJsonObject(json, "output"));
 
+            String[] pattern = ShapedRecipe.shrink(ShapedRecipe.patternFromJson(GsonHelper.getAsJsonArray(json, "pattern")));
+            int i = pattern[0].length();
+            int j = pattern.length;
+            NonNullList<Ingredient> nonnulllist = ShapedRecipe.dissolvePattern(pattern, map, i, j);
+            ItemStack output = ShapedRecipe.itemStackFromJson(GsonHelper.getAsJsonObject(json, "output"));
 
             float temperature = json.get("temperature").getAsFloat();
             float experience = json.get("experience").getAsFloat();
             float timeMultiplier = json.get("timeMultiplier").getAsFloat();
             boolean needsAdditives = json.get("needsAdditives").getAsBoolean();
 
+            NonNullList<Ingredient> nonnulladdativeslist = additivesFromJson(json);
+
+            nonnulladdativeslist.forEach(ingredient1 -> Rotary.LOGGER.info("aaaaaaaaaaaaaaaaaaaaaa" + Arrays.toString(ingredient1.getItems())));
+
             return new BlastFurnaceRecipe(id, nonnulllist, output, temperature, experience, timeMultiplier, needsAdditives);
+        }
+
+        private static NonNullList<Ingredient> additivesFromJson(JsonObject json) {
+            NonNullList<Ingredient> additives = NonNullList.create();
+
+            if (json.has("additives")) {
+                JsonObject additivesJson = json.getAsJsonObject("additives");
+                for (String key : additivesJson.keySet()) {
+                    JsonObject ingredientJson = additivesJson.getAsJsonObject(key);
+                    Ingredient ingredient = Ingredient.fromJson(ingredientJson);
+                    if (!ingredient.isEmpty()) {
+                        additives.add(ingredient);
+                    }
+                }
+            }
+            return additives;
         }
 
         @Override
         public @Nullable BlastFurnaceRecipe fromNetwork(ResourceLocation id, FriendlyByteBuf byteBuf) {
             NonNullList<Ingredient> inputs = NonNullList.withSize(7, Ingredient.EMPTY);
-            for (int i = 0; i < inputs.size(); i++) {
-                inputs.set(i, Ingredient.fromNetwork(byteBuf));
-            }
+            inputs.replaceAll(ignored -> Ingredient.fromNetwork(byteBuf));
             ItemStack output = byteBuf.readItem();
             float temperature = byteBuf.readFloat();
             float experience = byteBuf.readFloat();
