@@ -3,6 +3,7 @@ package mods.officialy.rotary.common.recipe;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
 import mods.officialy.rotary.Rotary;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.RegistryAccess;
@@ -50,8 +51,8 @@ public class BlastFurnaceRecipe implements Recipe<SimpleContainer> {
         if (needsAdditives) {
             for (int i = 0; i < 3; i++) {
                 ItemStack additiveStack = inv.getItem(i);
-                if (!additiveStack.isEmpty() && i < this.ingredients.size() && !this.ingredients.get(i).test(additiveStack)) {
-                    return false;
+                if (additiveStack.isEmpty() && i < this.ingredients.size() && this.ingredients.get(i).test(additiveStack)) {
+                    continue;
                 }
             }
         }
@@ -59,13 +60,12 @@ public class BlastFurnaceRecipe implements Recipe<SimpleContainer> {
         // Check if all recipe items match
         for (int i = 0; i < 9; i++) {
             ItemStack recipeStack = inv.getItem(i + 3); // Skip the first three slots for additives
-            if (!recipeStack.isEmpty() && i < this.ingredients.size() && (!this.ingredients.get(i).test(recipeStack))) {
-                return false;
+            if (recipeStack.isEmpty() && i < this.ingredients.size() && (this.ingredients.get(i).test(recipeStack))) {
+                return true;
             }
         }
-
         // All ingredients match
-        return true;
+        return false;
     }
 
     @Override
@@ -149,12 +149,16 @@ public class BlastFurnaceRecipe implements Recipe<SimpleContainer> {
             NonNullList<Ingredient> additives = NonNullList.create();
 
             if (json.has("additives")) {
-                JsonObject additivesJson = json.getAsJsonObject("additives");
-                for (String key : additivesJson.keySet()) {
-                    JsonObject ingredientJson = additivesJson.getAsJsonObject(key);
-                    Ingredient ingredient = Ingredient.fromJson(ingredientJson);
-                    if (!ingredient.isEmpty()) {
-                        additives.add(ingredient);
+                for (int i = 1; i <= 3; i++) {
+                    JsonObject additive = json.getAsJsonObject(String.valueOf(i));
+                    if (additive != null) {
+                        if (additive.has("item")) {
+                            additives.add(Ingredient.fromJson(additive.get("item")));
+                        } else if (additive.has("tag")) {
+                            additives.add(Ingredient.fromJson(additive.get("tag")));
+                        } else {
+                            throw new JsonSyntaxException("An ingredient entry needs either a tag or an item");
+                        }
                     }
                 }
             }
