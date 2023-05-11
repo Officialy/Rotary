@@ -40,12 +40,17 @@ public class BlastFurnaceScreen extends AbstractContainerScreen<BlastFurnaceMenu
     }
 
     private void onPressButton(Button button) {
-        blast.leaveLastItem = !blast.leaveLastItem;
+        var tag = blast.getUpdateTag();
+        Rotary.LOGGER.info("Button pressed " + "tag is: " + tag);
+        tag.putBoolean("leaveLastItem", !blast.leaveLastItem);
+        Rotary.LOGGER.info("It has been changed to " + tag);
+        blast.handleUpdateTag(tag);
         blast.setChanged();
     }
 
     @Override
     protected void renderBg(PoseStack stack, float p_97788_, int p_97789_, int p_97790_) {
+        this.renderBackground(stack);
         int j = (width - imageWidth) / 2;
         int k = (height - imageHeight) / 2;
         int i1 = container.getScaledProgress() * 24 / 100;
@@ -57,10 +62,10 @@ public class BlastFurnaceScreen extends AbstractContainerScreen<BlastFurnaceMenu
         }
 
         //Background texture
-        RenderSystem.setShaderTexture(0, new ResourceLocation("textures/block/stone_bricks.png"));//new ResourceLocation(Rotary.MODID, "textures/screen/blast_furnace.png"));
-        ScreenUtils.drawTexturedModalRect(stack, j, k, 0, 0, imageWidth, imageHeight, 0);
-        Gui.drawCenteredString(stack, font, blast.getTemperature() + "C", j + 16, k + 14, 17 + c);
-        Gui.drawCenteredString(stack, font, blast.progress + "%", j + 164, k + 64,  4210752);
+//        RenderSystem.setShaderTexture(0, new ResourceLocation("textures/block/stone_bricks.png"));//new ResourceLocation(Rotary.MODID, "textures/screen/blast_furnace.png"));
+//        ScreenUtils.drawTexturedModalRect(stack, j, k, 0, 0, imageWidth, imageHeight, 0);
+//        Gui.drawCenteredString(stack, font, blast.getTemperature() + "C", j + 16, k + 14, 17 + c);
+//        Gui.drawCenteredString(stack, font, blast.progress + "%", j + 164, k + 64,  4210752);
 
         //Progress bar
         RenderSystem.setShader(GameRenderer::getPositionTexShader);

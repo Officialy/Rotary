@@ -48,23 +48,27 @@ public class BlastFurnaceRecipe implements Recipe<SimpleContainer> {
     @Override
     public boolean matches(SimpleContainer inv, Level world) {
         // Check if all additives match - Ignores if needsAdditives is false
-        if (needsAdditives) {
-            for (int i = 0; i < 3; i++) {
-                ItemStack additiveStack = inv.getItem(i);
-                if (additiveStack.isEmpty() && i < this.ingredients.size() && this.ingredients.get(i).test(additiveStack)) {
-                    continue;
-                }
+        boolean satisfied = !needsAdditives;
+
+        for (int i = 0; i < 3; i++) {
+            ItemStack additiveStack = inv.getItem(8 + i); // last three slots
+            if (!additiveStack.isEmpty() && i < this.ingredients.size() && this.ingredients.get(i).test(additiveStack)) {
+                satisfied = true;
             }
         }
 
         // Check if all recipe items match
-        for (int i = 0; i < 9; i++) {
-            ItemStack recipeStack = inv.getItem(i + 3); // Skip the first three slots for additives
-            if (recipeStack.isEmpty() && i < this.ingredients.size() && (this.ingredients.get(i).test(recipeStack))) {
-                return true;
+        if (satisfied) {
+            for (int i = 0; i < 9; i++) {
+                ItemStack recipeStack = inv.getItem(i); // first nine slots
+                if (!recipeStack.isEmpty() && i < this.ingredients.size() && this.ingredients.get(i).test(recipeStack)) {
+                    continue;
+                }
+                return false;
             }
+            return true;
         }
-        // All ingredients match
+
         return false;
     }
 

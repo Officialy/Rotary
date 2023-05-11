@@ -12,6 +12,9 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
@@ -20,6 +23,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
@@ -32,7 +36,7 @@ import java.util.Optional;
 
 public class BlastFurnaceBlockEntity extends RotaryMachineBase implements MenuProvider, Tickable, Heatable {
 
-    // The Inventory, first 3 for additives the other 9 for crafting
+    // The Inventory, last 3 for additives the first 9 for crafting
     private final ItemStackHandler itemHandler = new ItemStackHandler(12) {
         @Override
         protected void onContentsChanged(int slot) {
@@ -85,28 +89,36 @@ public class BlastFurnaceBlockEntity extends RotaryMachineBase implements MenuPr
 
     @Override
     public void tick() {
-        if (!level.isClientSide()) {
-            if (hasRecipe(this) && temperature >= minimumOperatingTemperature) {
-                progress++;
-                Rotary.LOGGER.info("Progress: " + progress);
-                Level level = getLevel();
-                SimpleContainer inventory = new SimpleContainer(itemHandler.getSlots());
-                for (int i = 0; i < itemHandler.getSlots(); i++) {
-                    inventory.setItem(i, itemHandler.getStackInSlot(i));
-                }
+        if (hasRecipe(this) && temperature >= minimumOperatingTemperature) {
+            progress++;
+            Rotary.LOGGER.info("Progress: " + progress);
+            Level level = getLevel();
+            SimpleContainer inventory = new SimpleContainer(itemHandler.getSlots());
+            for (int i = 0; i < itemHandler.getSlots(); i++) {
+                inventory.setItem(i, itemHandler.getStackInSlot(i));
+            }
 
-                Optional<BlastFurnaceRecipe> match = level.getRecipeManager().getRecipeFor(BlastFurnaceRecipe.Type.INSTANCE, inventory, level);
+            Optional<BlastFurnaceRecipe> match = level.getRecipeManager().getRecipeFor(BlastFurnaceRecipe.Type.INSTANCE, inventory, level);
 
-                if (match.isPresent()) {
-                    Rotary.LOGGER.info("match.isPresent()");
-                    ItemStack output = match.get().getResultItem(RegistryAccess.EMPTY).copy();
+            if (match.isPresent()) {
+                ItemStack output = match.get().getResultItem(RegistryAccess.EMPTY).copy();
+                if (progress >= maxProgress) {
                     if (leaveLastItem) {
-                        // Craft the recipe and output the result
-                        itemHandler.extractItem(0, match.get().getIngredients().size(), false);
-                        for (int i = 1; i < 10; i++) {
-                            itemHandler.extractItem(i, 1, false);
+                        boolean canCraft = true; // set to false if any slot has less than 2 items
+                        for (int i = 0; i < 10; i++) { // check first 10 slots
+                            if (itemHandler.getStackInSlot(i).getCount() < 2) {
+                                canCraft = false;
+                                break; // no need to check other slots if one slot has less than 2 items
+                            }
                         }
-                        outputInv.insertItem(1, output, false);
+                        if (canCraft) {
+                            // Craft the recipe and output the result
+                            itemHandler.extractItem(0, match.get().getIngredients().size(), false);
+                            for (int i = 1; i < 10; i++) {
+                                itemHandler.extractItem(i, 1, false);
+                            }
+                            outputInv.insertItem(1, output, false);
+                        }
                     } else {
                         // Craft the recipe and output the result
                         itemHandler.extractItem(0, match.get().getIngredients().size(), false);
@@ -116,10 +128,10 @@ public class BlastFurnaceBlockEntity extends RotaryMachineBase implements MenuPr
                         outputInv.insertItem(1, output, false);
                     }
                 }
-            } else {
-                progress = 0;
-                setChanged();
             }
+        } else {
+            progress = 0;
+            setChanged();
         }
     }
 
@@ -165,6 +177,19 @@ public class BlastFurnaceBlockEntity extends RotaryMachineBase implements MenuPr
         tag.putFloat("temperature", temperature);
         tag.putFloat("progress", progress);
         tag.putBoolean("leaveLastItem", leaveLastItem);
+    }
+
+    @Nullable
+    @Override
+    public Packet<ClientGamePacketListener> getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this, blockEntity -> this.getUpdateTag());
+    }
+
+    @Override
+    public CompoundTag getUpdateTag() {
+        var tag = new CompoundTag();
+        saveAdditional(tag);
+        return tag;
     }
 
     @Override

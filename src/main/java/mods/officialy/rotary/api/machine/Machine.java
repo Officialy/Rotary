@@ -14,12 +14,7 @@ public interface Machine {
     // Method to enable the machine to be heatable
     boolean isHeatable();
 
-    // Method to enable the machine to be horizontally rotatable (i.e. Worktable, Sawmill)
-    boolean is4SideRotatable();
-
-    // Method to enable the machine to be horizontally and vertically rotatable (i.e. Shaft, Bedrock Breaker)
-    boolean is6SideRotatable();
-
-    // Method to enable the machine to be only vertically rotatable (i.e. todo idk what to put here rn)
-    boolean is2SideRotatable();
+    // Method to enable the machine to be horizontally and/or vertically rotatable (i.e. Grinder (4), Shaft (6), Bedrock Breaker (6))
+    // 4 = Horizontal, 6 = Vertical
+    int rotatableSides();
 }

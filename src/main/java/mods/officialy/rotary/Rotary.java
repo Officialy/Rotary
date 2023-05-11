@@ -22,7 +22,6 @@ public class Rotary {
     public static final String MODID = "rotary";
     public static final Logger LOGGER = LogUtils.getLogger();
 
-
     public Rotary() {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 
