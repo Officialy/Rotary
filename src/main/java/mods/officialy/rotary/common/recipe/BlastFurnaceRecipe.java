@@ -1,7 +1,5 @@
 package mods.officialy.rotary.common.recipe;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import mods.officialy.rotary.Rotary;
